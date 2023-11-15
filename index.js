@@ -9,6 +9,7 @@ const usersRouter = require('./controllers/users')
 const loginRouter = require('./controllers/login')
 const quizzesRouter = require('./controllers/quizzes')
 const questionsRouter = require('./controllers/questions')
+const performancesRouter = require('./controllers/performances')
 
 mongoose.set('strictQuery', false)
 
@@ -34,6 +35,7 @@ app.use('/api/users', usersRouter)
 app.use('/api/login', loginRouter)
 app.use('/api/quizzes', quizzesRouter)
 app.use('/api/questions', questionsRouter)
+app.use('/api/performances', performancesRouter)
 
 app.use(unknownEndpoint)
 app.use(errorHandler)
