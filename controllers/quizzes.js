@@ -2,10 +2,32 @@
 express Router, blog and user modules and 
 userExtractor middleware. */
 const quizzesRouter = require('express').Router()
+const imagesRouter = require('express').Router()
 const Quiz = require('../models/quiz')
 const Question = require('../models/question')
 const Answer = require('../models/answer')
 const { userExtractor } = require('../utils/middleware')
+const path = require('path')
+
+const multer = require('multer');
+
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, './controllers/uploads')
+        },
+
+        filename: function (req, file, callback) {
+            callback(null, file.fieldname + '-' + Date.now() +
+                path.extname(file.originalname))
+        }
+    })
+});
+
+imagesRouter.get('/:fileName', function (request, res) {
+
+    res.sendFile(`./uploads/${request.params.fileName}`, { root: __dirname });
+});
 
 /*Defining the route for getting blogs from MongoDB and
 populating their user value with the referred User object's
@@ -34,7 +56,7 @@ quizzesRouter.get('/:id', async (request, response) => {
 unless title or url have undefined or null values. Also using the 
 defined middlewares to identify the logged in user by decoding
 the jwt authorization token. */
-quizzesRouter.post('/', userExtractor, async (request, response) => {
+quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, response) => {
     const body = request.body
 
     const user = request.user
@@ -43,7 +65,8 @@ quizzesRouter.post('/', userExtractor, async (request, response) => {
     a user._id value to refer to the user who created it. */
     const quiz = new Quiz({
         title: body.title,
-        author: user._id
+        author: user._id,
+        image: request.file.filename,
     })
 
     /*Saving the blog._id in the blog collection of the
@@ -126,12 +149,19 @@ quizzesRouter.put('/:id', async (request, response) => {
         const body = request.body
 
         const ratingsTotal = [...body.ratings]
-        const average = (ratingsTotal.reduce((a, b) => a + b, 0) / ratingsTotal.length)      
+        const average = (ratingsTotal.reduce((a, b) => a + b, 0) / ratingsTotal.length)
+        let highScore = quizToUpdate.highScore
+        let highScoreSetBy = quizToUpdate.highScoreSetBy
+
+        if (body.score > quizToUpdate.highScore) {
+            highScore = body.score
+            highScoreSetBy = body.user
+        }
 
         const quiz = {
             title: body.title,
-            highScore: body.highScore,
-            highScoreSetBy: body.highScoreSetBy,
+            highScore: highScore,
+            highScoreSetBy: highScoreSetBy,
             questions: body.questions,
             author: body.author,
             difficulty: average,
@@ -189,5 +219,5 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
 
 
 
-module.exports = quizzesRouter
+module.exports = { quizzesRouter, imagesRouter }
 

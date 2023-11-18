@@ -36,7 +36,8 @@ const quizSchema = new mongoose.Schema({
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }
+    },
+    image: String
 })
 
 //Defining the mongoose-unique-validator plugin.
