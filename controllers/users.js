@@ -7,7 +7,7 @@ const User = require('../models/user')
 and use bcrypt to hash the given password, unless
 a password is not given or it is shorter than 3 characters. */
 usersRouter.post('/', async (request, response) => {
-    const { username, name, password } = request.body
+    const { username, password } = request.body
 
     if (!password || password.length < 3) {
         response.status(400).json({ error: 'Password must have a value of at least 3 characters.' }).end()
@@ -17,7 +17,6 @@ usersRouter.post('/', async (request, response) => {
 
         const user = new User({
             username,
-            name,
             passwordHash,
         })
 
