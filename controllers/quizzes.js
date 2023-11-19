@@ -34,7 +34,10 @@ populating their user value with the referred User object's
 username, and name. */
 quizzesRouter.get('/', async (request, response) => {
     const quizzes = await Quiz.find({}).populate('author', { username: 1 })
-        .populate('highScoreSetBy', { username: 1 })
+        .populate('highScoreSetBy', { username: 1 }).populate({
+            path: 'questions',
+            title: 1, topic: 1
+        })
     response.json(quizzes)
 })
 
@@ -61,13 +64,26 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
 
     const user = request.user
 
+    let quiz
+
     /*Defining the new blog object and giving it a
     a user._id value to refer to the user who created it. */
-    const quiz = new Quiz({
-        title: body.title,
-        author: user._id,
-        image: request.file.filename,
-    })
+    if (request.file) {
+        quiz = new Quiz({
+            title: body.title,
+            author: user._id,
+            image: request.file.filename,
+            completedAt: body.completedAt
+        })
+    } else {
+        quiz = new Quiz({
+            title: body.title,
+            author: user._id,
+            image: null,
+            completedAt: body.completedAt
+        })
+    }
+
 
     /*Saving the blog._id in the blog collection of the
     user as well and saving the user to the database

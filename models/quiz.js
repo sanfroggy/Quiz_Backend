@@ -15,6 +15,10 @@ const quizSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    completedAt: {
+        type: Number,
+        default: 0
+    },
     highScore: {
         type: Number,
         default: 0
