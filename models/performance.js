@@ -1,9 +1,9 @@
-//Defining the constants for mongoose and User.
+//Defining a constant for mongoose.
 const mongoose = require('mongoose')
 
-/*Define a schema to use as a model for a Blog object 
-to be saved to MongoDB, as well as a refence to User
-object that created the Blog object in question. */
+/*Define a schema to use as a model for a Performance object 
+to be saved to MongoDB, as well as a refence to User and
+Quiz objects that the performance is related to. */
 const performanceSchema = new mongoose.Schema({
     questionsAnswered: {
         type: Number,
@@ -32,6 +32,6 @@ performanceSchema.set("toJSON", {
     }
 })
 
-//Export the Blog object model.
+//Export the Performance object model.
 module.exports = mongoose.model('Performance', performanceSchema)
 

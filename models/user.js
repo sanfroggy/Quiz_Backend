@@ -1,12 +1,12 @@
-//Defining the constant for mongoose and mongoose-unique-validator.
+//Defining the constants for mongoose and mongoose-unique-validator.
 const mongoose = require('mongoose')
 const uniqueValidator = require('mongoose-unique-validator')
 
 /*Define a schema to use as a model for a User object 
-to be saved to MongoDB, as well as a refence to Blog
+to be saved to MongoDB, as well as a refence to Quiz
 objects created by that user. Using validation to
-make sure that a username is provided and it has ai minimum of 
-3 characters. */
+make sure that a unique username is provided and 
+it has a minimum of 3 characters. */
 const userSchema = mongoose.Schema({
     username: {
         type: String,
@@ -38,6 +38,7 @@ userSchema.set('toJSON', {
     }
 })
 
+//Export the User object model.
 const User = mongoose.model('User', userSchema)
 
 module.exports = User

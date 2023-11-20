@@ -1,10 +1,12 @@
-//Defining the constants for mongoose and User.
+//Defining the constants for mongoose and mongoose-unique-validator.
 const mongoose = require('mongoose')
 const uniqueValidator = require('mongoose-unique-validator')
 
-/*Define a schema to use as a model for a Blog object 
-to be saved to MongoDB, as well as a refence to User
-object that created the Blog object in question. */
+/*Define a schema to use as a model for a Quiz object 
+to be saved to MongoDB, as well as a refence to the User 
+that created the quiz in question and the User object
+that has set the highest score on the quiz in question. 
+Also defining an array of Question objects related to this quiz. */
 const quizSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -58,6 +60,6 @@ quizSchema.set("toJSON", {
     }
 })
 
-//Export the Blog object model.
+//Export the Quiz object model.
 module.exports = mongoose.model('Quiz', quizSchema)
 

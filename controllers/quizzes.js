@@ -1,5 +1,5 @@
-/*Defining constants for blog model,
-express Router, blog and user modules and 
+/*Defining constants for quiz, question and answer models,
+express Routers, path, multer middleware and 
 userExtractor middleware. */
 const quizzesRouter = require('express').Router()
 const imagesRouter = require('express').Router()
@@ -11,6 +11,10 @@ const path = require('path')
 
 const multer = require('multer');
 
+/*Defining upload variable used for image uploads.
+multer.diskStorage is used and the uploads folder
+is set as a destination. Fieldname, current date and originalname 
+are all saved to the filename. */
 const upload = multer({
     storage: multer.diskStorage({
         destination: (req, file, cb) => {
@@ -24,14 +28,17 @@ const upload = multer({
     })
 });
 
+/*Defining a route to get an image. A file with the requested
+filename from the uploads folder is returned as a response. */
 imagesRouter.get('/:fileName', function (request, res) {
 
     res.sendFile(`./uploads/${request.params.fileName}`, { root: __dirname });
 });
 
-/*Defining the route for getting blogs from MongoDB and
-populating their user value with the referred User object's
-username, and name. */
+/*Defining the route for getting quizzes from MongoDB and
+populating their author value with the referred User object's
+username. Also populating the highScoreSetBy field and
+the question array with the referred question objects titles and topics. */
 quizzesRouter.get('/', async (request, response) => {
     const quizzes = await Quiz.find({}).populate('author', { username: 1 })
         .populate('highScoreSetBy', { username: 1 }).populate({
@@ -41,9 +48,11 @@ quizzesRouter.get('/', async (request, response) => {
     response.json(quizzes)
 })
 
-/*Defining the route for getting blogs from MongoDB and
-populating their user value with the referred User object's
-username, and name. */
+/*Defining the route for getting a quiz from MongoDB based on
+a quiz id and populating it's author value with the referred User object's
+username. Also populating the highScoreSetBy field and
+the question array with the referred question objects titles and topics
+as well as the answers array and correctAnswer field.*/
 quizzesRouter.get('/:id', async (request, response) => {
     const quiz = await Quiz.findById(request.params.id).populate('author', { username: 1 })
         .populate('highScoreSetBy', { username: 1 })
@@ -55,8 +64,8 @@ quizzesRouter.get('/:id', async (request, response) => {
     response.json(quiz)
 })
 
-/*Defining the route for saving a new blog with async / await, 
-unless title or url have undefined or null values. Also using the 
+/*Defining the route for saving a new quiz with async / await, 
+unless title has an undefined or a null value. Also using the 
 defined middlewares to identify the logged in user by decoding
 the jwt authorization token. */
 quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, response) => {
@@ -66,8 +75,11 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
 
     let quiz
 
-    /*Defining the new blog object and giving it a
-    a user._id value to refer to the user who created it. */
+    /*Defining the new quiz object and giving it a
+    a user._id value to refer to the user who created it. 
+    If an image is provided the filename is given as a property
+    to it's image field. Otherwise null is given as a value,
+    but a default image is requested in the frontend. */
     if (request.file) {
         quiz = new Quiz({
             title: body.title,
@@ -85,9 +97,9 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
     }
 
 
-    /*Saving the blog._id in the blog collection of the
+    /*Saving the quiz._id in the quizzes array of the
     user as well and saving the user to the database
-    with the blog._id defined. Returning an error
+    with the quiz._id defined. Returning an error
     message if required data is missing. */
     if (!quiz.title ) {
         response.status(400).json({
@@ -108,14 +120,14 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
 
 })
 
-/*Defining the route for deleting an existing blog with
+/*Defining the route for deleting an existing quiz with
 async / await, unless the given id is invalid. Returning
 an approppriate error message if given an invalid id. */
 quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
 
-    /*Using the define dmiddlewares to identify the logged in user
+    /*Using the defined middlewares to identify the logged in user
     by decoding the jtw authorization token and making sure that 
-    only the user who has created the blog, can delete it. */
+    only the user who has created the quiz, can delete it. */
     const quizToDelete = await Quiz.findById(request.params.id)
 
     const user = request.user
@@ -126,12 +138,12 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
 
     if (quizToDelete !== null && quizToDelete !== undefined) {
 
-        /*Deleting the blog with the received id and removing the reference to
-        the deleted blog from the users.blogs array and saving the user. */
-        const index = user.blogs.indexOf(quizToDelete.id)
+        /*Deleting the quiz with the received id and removing the reference to
+        the deleted quiz from the user.quizzes array and saving the user. */
+        const index = user.quizzes.indexOf(quizToDelete.id)
 
         if (index > -1) {
-            user.blogs.splice(index, 1)
+            user.quizzes.splice(index, 1)
         }
 
         const questions = Question.find({})
@@ -152,9 +164,7 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
     }
 })
 
-
-
-/*Defining the route for updating an existing blog with
+/*Defining the route for updating an existing quiz with
 async / await, unless the given id is invalid and 
 returning an error message. */
 quizzesRouter.put('/:id', async (request, response) => {
@@ -184,9 +194,9 @@ quizzesRouter.put('/:id', async (request, response) => {
             ratings: ratingsTotal
         }
 
-        const updatedBlog = await Quiz.findByIdAndUpdate(
+        const updatedQuiz = await Quiz.findByIdAndUpdate(
             request.params.id, quiz, { new: true })
-        response.status(200).json(updatedBlog)
+        response.status(200).json(updatedQuiz)
     } else {
         response.status(404).json({
             error: 'Quiz does not exist. It has possibly been deleted.'
@@ -194,8 +204,8 @@ quizzesRouter.put('/:id', async (request, response) => {
     }
 })
 
-/*Defining the route for saving a new comment with async / await. 
-if the commented blog does not exist anymore, or given id is invalid,
+/*Defining the route for saving a new question with async / await. 
+if the related quiz does not exist anymore, or given id is invalid,
 an appropriate error message is returned. */
 quizzesRouter.post('/:id/questions', async (request, response) => {
 
@@ -208,8 +218,8 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
         quiz: quiz.id,
     })
 
-    /*If the blog is found from the MongoDB database it is saved
-    and the id of the comment is also saved to the blog data as
+    /*If the quiz is found from the MongoDB database it is saved
+    and the id of the question is also saved to the quiz data as
     a reference. */
     if (quiz) {
         const savedQuestion = await question.save()
@@ -218,7 +228,7 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
             quiz.questions = quiz.questions[0] = savedQuestion._id
             await quiz.save()
         } else {
-            quiz.questions = quiz.comments.concat(savedQuestion._id)
+            quiz.questions = quiz.questions.concat(savedQuestion._id)
             await quiz.save()
         }
 

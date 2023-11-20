@@ -1,9 +1,9 @@
-//Defining the constants for mongoose and User.
+//Defining a constant for mongoose.
 const mongoose = require('mongoose')
 
-/*Define a schema to use as a model for a Blog object 
-to be saved to MongoDB, as well as a refence to User
-object that created the Blog object in question. */
+/*Define a schema to use as a model for an Answer object 
+to be saved to MongoDB, as well as a refence to Question
+object that the answer is related to. */
 const answerSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -26,5 +26,5 @@ answerSchema.set("toJSON", {
     }
 })
 
-//Export the Blog object model.
+//Export the Answer object model.
 module.exports = mongoose.model('Answer', answerSchema)
