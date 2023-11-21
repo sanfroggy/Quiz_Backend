@@ -73,7 +73,7 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
 
     const user = request.user
 
-    let quiz
+    let quiz = await Quiz.find({ title: body.title })
 
     /*Defining the new quiz object and giving it a
     a user._id value to refer to the user who created it. 
@@ -116,6 +116,8 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
         }
 
         response.status(201).json(savedQuiz)
+
+        
     }
 
 })
@@ -222,17 +224,24 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
     and the id of the question is also saved to the quiz data as
     a reference. */
     if (quiz) {
-        const savedQuestion = await question.save()
 
-        if (quiz.questions.length === 0) {
-            quiz.questions = quiz.questions[0] = savedQuestion._id
-            await quiz.save()
+        if (!question.title ||!question.topic) {
+            response.status(400).json({
+                error: 'Question and topic must have values.'
+            }).end()
         } else {
-            quiz.questions = quiz.questions.concat(savedQuestion._id)
-            await quiz.save()
-        }
+            const savedQuestion = await question.save()
 
-        response.status(201).json(savedQuestion)
+            if (quiz.questions.length === 0) {
+                quiz.questions = quiz.questions[0] = savedQuestion._id
+                await quiz.save()
+            } else {
+                quiz.questions = quiz.questions.concat(savedQuestion._id)
+                await quiz.save()
+            }
+
+            response.status(201).json(savedQuestion)
+        }
     } else {
         response
             .status(404)
