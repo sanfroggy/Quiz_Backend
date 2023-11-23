@@ -154,13 +154,12 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
             user.quizzes.splice(index, 1)
         }
 
-        const questions = Question.find({})
-        const answers = Answer.find({})
+        const questions = quizToDelete.questions
 
-        const questionsIds = questions.map(question => question.id)
+        console.log(questions)
 
-        await answers.deleteMany({ question: { $in: questionsIds } })
-        await questions.deleteMany({ quiz: quizToDelete.id.toString() })
+        await Answer.deleteMany({ question: { $in: questions } })
+        await Question.deleteMany({ quiz: quizToDelete.id.toString() })
 
         await Quiz.findOneAndRemove(quizToDelete)
 
