@@ -19,21 +19,6 @@ let initialQuizzes = [
     },
 ]
 
-/*Returning an id that is sure not to exist in the 
-MongoDB database for testing purposes. */
-/*const nonExistingId = async () => {
-    const blog = new Quiz({
-        title: 'willremovethissoon',
-        author: 'nonrelevant',
-        url: 'http://www.urlneedstobedefined.com',
-        likes: 0
-    })
-    await blog.save()
-    await Blog.findByIdAndRemove(blog._id)
-
-    return blog._id.toString()
-}*/
-
 //Return all the blogs in the MongoDB database.
 const quizzesInDb = async () => {
     const quizzes = await Quiz.find({})
