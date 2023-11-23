@@ -261,7 +261,7 @@ describe('when there is initially one user at db', () => {
         const usersAtStart = await helper.usersInDb()
 
         const newUser = {
-            username: 'SanTheBlogger',
+            username: 'SanTheQuizMaster',
             password: 'Apinaz368',
         }
 
@@ -350,7 +350,7 @@ describe('when a post request is made to add a user', () => {
         response = await api.post('/api/users').send(newUser).expect(201)
 
         newUser = {
-            username: 'SanTheBlogger',
+            username: 'SanTheQuizMaster',
             password: 'Jabadabaduu'
         }
 
