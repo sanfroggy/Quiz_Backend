@@ -5,7 +5,9 @@ const User = require('../models/user')
 /*Separating the actual value of the received authorization token
 from the authorization scheme declaration. (Bearer in this case) */
 const tokenExtractor = (req, res, next) => {
+
     let authorization = req.get('authorization')
+
     if (authorization && authorization.startsWith('Bearer ')) {
         req.token = authorization.replace('Bearer ', '')
     }
@@ -20,13 +22,13 @@ const tokenExtractor = (req, res, next) => {
 Also checking if the decoded token contains a user id.*/
 const userExtractor = async (req, res, next) => {
 
-    const decoded = jwt.verify(req.token, process.env.SECRET)
+    const decoded = req.token ? jwt.verify(req.token, process.env.SECRET) : null
 
-    if (!decoded.id) {
+    if (!decoded || !decoded.id) {
         res.status(401).json({ error: 'Invalid token.' })
     }
 
-    req.user = await User.findById(decoded.id)
+    req.user = decoded ? await User.findById(decoded.id) : null
 
     next()
 }

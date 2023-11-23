@@ -10,7 +10,7 @@ Also defining an array of Question objects related to this quiz. */
 const quizSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Title cannot be empty'],
+        required: [true, 'Title cannot be empty.'],
         unique: [true, 'This title is already in use by another quiz. Quiz titles must be unique.']
     },
     difficulty: {
@@ -40,6 +40,7 @@ const quizSchema = new mongoose.Schema({
         }
     ],
     author: {
+        required: [true, 'Author cannot be empty'],
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },

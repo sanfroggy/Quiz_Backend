@@ -8,7 +8,7 @@ array of Answer objects related to this question. */
 const questionSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Title cannot be empty']
+        required: [true, 'Title cannot be empty.']
     },
     topic: {
         type: String,

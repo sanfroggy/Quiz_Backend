@@ -69,11 +69,20 @@ unless title has an undefined or a null value. Also using the
 defined middlewares to identify the logged in user by decoding
 the jwt authorization token. */
 quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, response) => {
+
     const body = request.body
 
     const user = request.user
 
-    let quiz = await Quiz.find({ title: body.title })
+    let quiz = null
+
+    let completedAt = body.completedAt
+
+    if (!body.completedAt) {
+        completedAt = 0
+    }
+
+    if (user) { 
 
     /*Defining the new quiz object and giving it a
     a user._id value to refer to the user who created it. 
@@ -85,27 +94,23 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
             title: body.title,
             author: user._id,
             image: request.file.filename,
-            completedAt: body.completedAt
+            completedAt: completedAt
         })
     } else {
         quiz = new Quiz({
             title: body.title,
             author: user._id,
             image: null,
-            completedAt: body.completedAt
+            completedAt: completedAt
         })
     }
 
+    try {
 
-    /*Saving the quiz._id in the quizzes array of the
-    user as well and saving the user to the database
-    with the quiz._id defined. Returning an error
-    message if required data is missing. */
-    if (!quiz.title ) {
-        response.status(400).json({
-            error: 'Quiz must have a title.'
-        }).end()
-    } else {
+        /*Saving the quiz._id in the quizzes array of the
+        user as well and saving the user to the database
+        with the quiz._id defined. Returning an error
+        message if required data is missing. */
         const savedQuiz = await quiz.save()
         if (user.quizzes.length === 0) {
             user.quizzes = user.quizzes[0] = savedQuiz._id
@@ -116,8 +121,9 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
         }
 
         response.status(201).json(savedQuiz)
-
-        
+    } catch (error) {
+        response.status(400).json(error).end()
+        }   
     }
 
 })
@@ -225,11 +231,12 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
     a reference. */
     if (quiz) {
 
-        if (!question.title ||!question.topic) {
+        /*if (!question.title ||!question.topic) {
             response.status(400).json({
                 error: 'Question and topic must have values.'
             }).end()
-        } else {
+        } else {*/
+        try {
             const savedQuestion = await question.save()
 
             if (quiz.questions.length === 0) {
@@ -241,7 +248,10 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
             }
 
             response.status(201).json(savedQuestion)
+        } catch (error) {
+            response.status(400).json(error).end()
         }
+        //}
     } else {
         response
             .status(404)
