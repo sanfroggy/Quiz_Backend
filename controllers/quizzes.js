@@ -7,6 +7,7 @@ const Quiz = require('../models/quiz')
 const Question = require('../models/question')
 const Answer = require('../models/answer')
 const { userExtractor } = require('../utils/middleware')
+const fs = require('fs')
 const path = require('path')
 
 const multer = require('multer');
@@ -135,7 +136,8 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
 
     /*Using the defined middlewares to identify the logged in user
     by decoding the jtw authorization token and making sure that 
-    only the user who has created the quiz, can delete it. */
+    only the user who has created the quiz, can delete it. Also deleting 
+    the image related to the quiz if one is defined. */
     const quizToDelete = await Quiz.findById(request.params.id)
 
     const user = request.user
@@ -145,6 +147,16 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
     }
 
     if (quizToDelete !== null && quizToDelete !== undefined) {
+
+        if (quizToDelete.image !== null && quizToDelete.image !== undefined) {
+            const filePath = `${__dirname}/uploads/${quizToDelete.image}`
+            console.log(filePath)
+            fs.unlink(filePath, (error) => {
+                if (error) {
+                    response.status(404).json(error).end()
+                }
+            })
+        }
 
         /*Deleting the quiz with the received id and removing the reference to
         the deleted quiz from the user.quizzes array and saving the user. */
