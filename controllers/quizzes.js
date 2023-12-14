@@ -72,58 +72,64 @@ the jwt authorization token. */
 quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, response) => {
 
     const body = request.body
-
     const user = request.user
 
     let quiz = null
 
     let completedAt = body.completedAt
+    let timeLimit = body.timeLimitPerQuestion
 
     if (!body.completedAt) {
         completedAt = 0
     }
 
-    if (user) { 
-
-    /*Defining the new quiz object and giving it a
-    a user._id value to refer to the user who created it. 
-    If an image is provided the filename is given as a property
-    to it's image field. Otherwise null is given as a value,
-    but a default image is requested in the frontend. */
-    if (request.file) {
-        quiz = new Quiz({
-            title: body.title,
-            author: user._id,
-            image: request.file.filename,
-            completedAt: completedAt
-        })
-    } else {
-        quiz = new Quiz({
-            title: body.title,
-            author: user._id,
-            image: null,
-            completedAt: completedAt
-        })
+    if (!body.timeLimitPerQuestion) {
+        timeLimit = 30
     }
 
-    try {
+    if (user) { 
 
-        /*Saving the quiz._id in the quizzes array of the
-        user as well and saving the user to the database
-        with the quiz._id defined. Returning an error
-        message if required data is missing. */
-        const savedQuiz = await quiz.save()
-        if (user.quizzes.length === 0) {
-            user.quizzes = user.quizzes[0] = savedQuiz._id
-            await user.save()
+        /*Defining the new quiz object and giving it a
+        a user._id value to refer to the user who created it. 
+        If an image is provided the filename is given as a property
+        to it's image field. Otherwise null is given as a value,
+        but a default image is requested in the frontend. */
+        if (request.file) {
+            quiz = new Quiz({
+                title: body.title,
+                author: user._id,
+                image: request.file.filename,
+                completedAt: completedAt,
+                timeLimitPerQuestion: timeLimit
+            })
         } else {
-            user.quizzes = user.quizzes.concat(savedQuiz._id)
-            await user.save()
+            quiz = new Quiz({
+                title: body.title,
+                author: user._id,
+                image: null,
+                completedAt: completedAt,
+                timeLimitPerQuestion: timeLimit
+            })
         }
 
-        response.status(201).json(savedQuiz)
-    } catch (error) {
-        response.status(400).json(error).end()
+        try {
+
+            /*Saving the quiz._id in the quizzes array of the
+            user as well and saving the user to the database
+            with the quiz._id defined. Returning an error
+            message if required data is missing. */
+            const savedQuiz = await quiz.save()
+            if (user.quizzes.length === 0) {
+                user.quizzes = user.quizzes[0] = savedQuiz._id
+                await user.save()
+            } else {
+                user.quizzes = user.quizzes.concat(savedQuiz._id)
+                await user.save()
+            }
+
+            response.status(201).json(savedQuiz)
+        } catch (error) {
+            response.status(400).json(error).end()
         }   
     }
 
@@ -242,11 +248,6 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
     a reference. */
     if (quiz) {
 
-        /*if (!question.title ||!question.topic) {
-            response.status(400).json({
-                error: 'Question and topic must have values.'
-            }).end()
-        } else {*/
         try {
             const savedQuestion = await question.save()
 
@@ -262,7 +263,6 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
         } catch (error) {
             response.status(400).json(error).end()
         }
-        //}
     } else {
         response
             .status(404)

@@ -12,7 +12,7 @@ const userSchema = mongoose.Schema({
         type: String,
         required: [true, 'Username cannot have an empty value.'],
         minlength: [3, 'Username must contain at least 3 characters.'],
-        unique: [true, 'Username is already in use.']
+        unique: true
     },
     passwordHash: String,
     quizzes: [
@@ -24,7 +24,7 @@ const userSchema = mongoose.Schema({
 })
 
 //Defining the mongoose-unique-validator plugin.
-userSchema.plugin(uniqueValidator)
+userSchema.plugin(uniqueValidator, { message: 'Username is already in use.' })
 
 /*Define the properties of the objects that are returned by the toJSON method.
 Exclude the _id value as well as the MongoDB version field __v and the 

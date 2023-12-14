@@ -9,25 +9,22 @@ a password is not given or it is shorter than 8 characters. */
 usersRouter.post('/', async (request, response) => {
     const { username, password } = request.body
 
-            if (!password || password.length < 8) {
-                response.status(400).json({ error: 'Password must have a value of at least 8 characters.' }).end()
-            } else {
-                try {
-                    const saltRounds = 10
-                    const passwordHash = await bcrypt.hash(password, saltRounds)
+    try {
+        const saltRounds = 10
+        const passwordHash = await bcrypt.hash(password, saltRounds)
 
-                    const user = new User({
-                        username,
-                        passwordHash,
-                    })
+        const user = new User({
+            username,
+            passwordHash,
+        })
 
-                    const savedUser = await user.save()
+        const savedUser = await user.save()
 
-                        response.status(201).json(savedUser)
-                } catch (error) {
-                    response.status(400).json(error).end()
-                }
-            }
+        response.status(201).json(savedUser)
+
+    } catch (error) {
+        response.status(400).json(error).end()
+    }
 
 })
 

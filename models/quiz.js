@@ -11,7 +11,7 @@ const quizSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, 'Title cannot be empty.'],
-        unique: [true, 'This title is already in use by another quiz. Quiz titles must be unique.']
+        unique: true
     },
     difficulty: {
         type: Number,
@@ -40,15 +40,19 @@ const quizSchema = new mongoose.Schema({
         }
     ],
     author: {
-        required: [true, 'Author cannot be empty'],
+        required: [true, 'You must be logged in to create a quiz.'],
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    image: String
+    image: String,
+    timeLimitPerQuestion: {
+        type: Number,
+        default: 30
+    }
 })
 
 //Defining the mongoose-unique-validator plugin.
-quizSchema.plugin(uniqueValidator)
+quizSchema.plugin(uniqueValidator, { message: 'This title is already in use by another quiz. Quiz titles must be unique.' })
 
 /*Define the properties of the objects that are returned by the toJSON method.
 Exclude the _id value as well as the MongoDB version field __v.
