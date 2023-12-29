@@ -1,6 +1,6 @@
 //Defining the constants for mongoose and mongoose-unique-validator.
 const mongoose = require('mongoose')
-const uniqueValidator = require('mongoose-unique-validator')
+//const uniqueValidator = require('mongoose-unique-validator')
 
 /*Define a schema to use as a model for a Quiz object 
 to be saved to MongoDB, as well as a refence to the User 
@@ -10,8 +10,7 @@ Also defining an array of Question objects related to this quiz. */
 const quizSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: [true, 'Title cannot be empty.'],
-        unique: true
+        required: [true, 'Title cannot be empty.']
     },
     difficulty: {
         type: Number,
@@ -52,7 +51,7 @@ const quizSchema = new mongoose.Schema({
 })
 
 //Defining the mongoose-unique-validator plugin.
-quizSchema.plugin(uniqueValidator, { message: 'This title is already in use by another quiz. Quiz titles must be unique.' })
+//quizSchema.plugin(uniqueValidator, { message: 'This title is already in use by another quiz. Quiz titles must be unique.' })
 
 /*Define the properties of the objects that are returned by the toJSON method.
 Exclude the _id value as well as the MongoDB version field __v.

@@ -36,4 +36,12 @@ usersRouter.get('/', async (request, response) => {
     response.json(users)
 })
 
+/*Defining the route for getting a user from MongoDB and
+populating the quizzes array with the referred Quiz object's
+title. */
+usersRouter.get('/:id', async (request, response) => {
+    const users = await User.findById(request.params.id).populate('quizzes', { title: 1 })
+    response.json(users)
+})
+
 module.exports = usersRouter

@@ -33,5 +33,5 @@ const usersInDb = async () => {
 
 
 module.exports = {
-    initialQuizzes, /*nonExistingId, */quizzesInDb, usersInDb
+    initialQuizzes, quizzesInDb, usersInDb
 }

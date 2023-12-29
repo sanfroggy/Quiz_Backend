@@ -5,9 +5,9 @@ const mongoose = require('mongoose')
 to be saved to MongoDB, as well as a refence to User and
 Quiz objects that the performance is related to. */
 const performanceSchema = new mongoose.Schema({
-    questionsAnswered: {
+    score: {
         type: Number,
-        required: [true, 'The number of questions answered must have a value']
+        required: [true, 'Score must have a value']
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,

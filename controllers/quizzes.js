@@ -14,8 +14,8 @@ const multer = require('multer');
 
 /*Defining upload variable used for image uploads.
 multer.diskStorage is used and the uploads folder
-is set as a destination. Fieldname, current date and originalname 
-are all saved to the filename. */
+is set as a destination. fieldname and current date 
+are saved to the filename. */
 const upload = multer({
     storage: multer.diskStorage({
         destination: (req, file, cb) => {
@@ -74,63 +74,74 @@ quizzesRouter.post('/', userExtractor, upload.single('image'), async (request, r
     const body = request.body
     const user = request.user
 
-    let quiz = null
+    /*Getting all the quizzes created by the currently logged in user and 
+    checking that a quiz with the given title does not already exist. */
+    const quizzesByMe = await Quiz.find({ author: user })
 
-    let completedAt = body.completedAt
-    let timeLimit = body.timeLimitPerQuestion
+    if (!quizzesByMe.some((quiz) => quiz.title === body.title)) {
+        let quiz = null
 
-    if (!body.completedAt) {
-        completedAt = 0
-    }
+        let completedAt = body.completedAt
+        let timeLimit = body.timeLimitPerQuestion
 
-    if (!body.timeLimitPerQuestion) {
-        timeLimit = 30
-    }
-
-    if (user) { 
-
-        /*Defining the new quiz object and giving it a
-        a user._id value to refer to the user who created it. 
-        If an image is provided the filename is given as a property
-        to it's image field. Otherwise null is given as a value,
-        but a default image is requested in the frontend. */
-        if (request.file) {
-            quiz = new Quiz({
-                title: body.title,
-                author: user._id,
-                image: request.file.filename,
-                completedAt: completedAt,
-                timeLimitPerQuestion: timeLimit
-            })
-        } else {
-            quiz = new Quiz({
-                title: body.title,
-                author: user._id,
-                image: null,
-                completedAt: completedAt,
-                timeLimitPerQuestion: timeLimit
-            })
+        if (!body.completedAt) {
+            completedAt = 0
         }
 
-        try {
+        if (!body.timeLimitPerQuestion) {
+            timeLimit = 30
+        }
 
-            /*Saving the quiz._id in the quizzes array of the
-            user as well and saving the user to the database
-            with the quiz._id defined. Returning an error
-            message if required data is missing. */
-            const savedQuiz = await quiz.save()
-            if (user.quizzes.length === 0) {
-                user.quizzes = user.quizzes[0] = savedQuiz._id
-                await user.save()
+        if (user) {
+
+            /*Defining the new quiz object and giving it a
+            a user._id value to refer to the user who created it. 
+            If an image is provided the filename is given as a property
+            to it's image field. Otherwise null is given as a value,
+            but a default image is requested in the frontend. */
+            if (request.file) {
+                quiz = new Quiz({
+                    title: body.title,
+                    author: user._id,
+                    image: request.file.filename,
+                    completedAt: completedAt,
+                    timeLimitPerQuestion: timeLimit
+                })
             } else {
-                user.quizzes = user.quizzes.concat(savedQuiz._id)
-                await user.save()
+                quiz = new Quiz({
+                    title: body.title,
+                    author: user._id,
+                    image: null,
+                    completedAt: completedAt,
+                    timeLimitPerQuestion: timeLimit
+                })
             }
 
-            response.status(201).json(savedQuiz)
-        } catch (error) {
-            response.status(400).json(error).end()
-        }   
+            try {
+
+                /*Saving the quiz._id in the quizzes array of the
+                user as well and saving the user to the database
+                with the quiz._id defined. Returning an error
+                message if required data is missing. */
+                const savedQuiz = await quiz.save()
+                if (user.quizzes.length === 0) {
+                    user.quizzes = user.quizzes[0] = savedQuiz._id
+                    await user.save()
+                } else {
+                    user.quizzes = user.quizzes.concat(savedQuiz._id)
+                    await user.save()
+                }
+
+                response.status(201).json(savedQuiz)
+            } catch (error) {
+                response.status(400).json(error).end()
+            }
+        }
+    } else {
+        response.status(400).json({
+            error: 'You have already created a quiz with the given title.'
+        }).end()
+        
     }
 
 })
@@ -156,7 +167,7 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
 
         if (quizToDelete.image !== null && quizToDelete.image !== undefined) {
             const filePath = `${__dirname}/uploads/${quizToDelete.image}`
-            console.log(filePath)
+
             fs.unlink(filePath, (error) => {
                 if (error) {
                     response.status(404).json(error).end()
@@ -173,8 +184,6 @@ quizzesRouter.delete('/:id', userExtractor, async (request, response) => {
         }
 
         const questions = quizToDelete.questions
-
-        console.log(questions)
 
         await Answer.deleteMany({ question: { $in: questions } })
         await Question.deleteMany({ quiz: quizToDelete.id.toString() })
@@ -235,7 +244,7 @@ an appropriate error message is returned. */
 quizzesRouter.post('/:id/questions', async (request, response) => {
 
     const body = request.body
-    const quiz = await Quiz.findById(request.params.id)
+    const quiz = await Quiz.findById(request.params.id).populate('questions', { title: 1 })
 
     const question = new Question({
         title: body.title,
@@ -243,25 +252,33 @@ quizzesRouter.post('/:id/questions', async (request, response) => {
         quiz: quiz.id,
     })
 
-    /*If the quiz is found from the MongoDB database it is saved
-    and the id of the question is also saved to the quiz data as
-    a reference. */
+    /*If the quiz is found from the MongoDB database and the quiz does 
+    not already contain a question with the given title, it is saved and 
+    the id of the question is also saved to the quiz data as a reference. */
     if (quiz) {
+        if (!quiz.questions.some((question) => question.title === body.title)) {
+            try {
+                const savedQuestion = await question.save()
 
-        try {
-            const savedQuestion = await question.save()
+                if (quiz.questions.length === 0) {
+                    quiz.questions = quiz.questions[0] = savedQuestion._id
+                    await quiz.save()
+                } else {
+                    quiz.questions = quiz.questions.concat(savedQuestion._id)
+                    await quiz.save()
+                }
 
-            if (quiz.questions.length === 0) {
-                quiz.questions = quiz.questions[0] = savedQuestion._id
-                await quiz.save()
-            } else {
-                quiz.questions = quiz.questions.concat(savedQuestion._id)
-                await quiz.save()
+                response.status(201).json(savedQuestion)
+            } catch (error) {
+                response.status(400).json(error).end()
             }
-
-            response.status(201).json(savedQuestion)
-        } catch (error) {
-            response.status(400).json(error).end()
+        } else {
+            response
+                .status(400)
+                .json({
+                    error: 'Quiz already contains a question with the given title.',
+                })
+                .end()
         }
     } else {
         response
